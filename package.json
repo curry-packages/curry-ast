@@ -1,0 +1,24 @@
+{
+    "name": "curry-ast",
+    "version": "2.0.0",
+    "author": "Kai-Oliver Prott <stu126209@mail.uni-kiel.de>",
+    "synopsis": "Libaries to represent Curry programs",
+    "category": [ "Metaprogramming" ],
+    "compilerCompatibility": {
+        "pakcs": ">= 2.0.0",
+        "kics2": ">= 2.0.0"
+    },
+    "dependencies": {
+        "base" : ">= 1.0.0, < 2.0.0"
+    },
+    "exportedModules": [ "Curry.Types",
+                         "Curry.Files",
+                         "Curry.Ident",
+                         "Curry.Position",
+                         "Curry.Span" ,
+                         "Curry.SpanInfo" ],
+    "source": {
+        "git": "https://git.ps.informatik.uni-kiel.de/curry-packages/curry-ast.git",
+        "tag": "$version"
+    }
+}

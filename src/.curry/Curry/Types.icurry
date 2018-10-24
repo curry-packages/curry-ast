@@ -1,0 +1,835 @@
+interface Curry.Types where {
+import Curry.Ident;
+import Curry.Position;
+import Curry.SpanInfo;
+import Prelude;
+data Alt a = Alt Curry.SpanInfo.SpanInfo (Pattern a) (Rhs a);
+data CaseType = Rigid | Flex;
+data CondExpr a
+  = CondExpr Curry.SpanInfo.SpanInfo (Expression a) (Expression a);
+data ConstrDecl
+  = ConstrDecl Curry.SpanInfo.SpanInfo [Curry.Ident.Ident]
+               [Constraint] Curry.Ident.Ident [TypeExpr]
+  | ConOpDecl Curry.SpanInfo.SpanInfo [Curry.Ident.Ident]
+              [Constraint] TypeExpr Curry.Ident.Ident TypeExpr
+  | RecordDecl Curry.SpanInfo.SpanInfo [Curry.Ident.Ident]
+               [Constraint] Curry.Ident.Ident [FieldDecl];
+data Constraint
+  = Constraint Curry.SpanInfo.SpanInfo Curry.Ident.QualIdent
+               TypeExpr;
+type Context = [Constraint];
+data Decl a
+  = InfixDecl Curry.SpanInfo.SpanInfo Infix
+              (Prelude.Maybe Prelude.Int) [Curry.Ident.Ident]
+  | DataDecl Curry.SpanInfo.SpanInfo Curry.Ident.Ident
+             [Curry.Ident.Ident] [ConstrDecl] [Curry.Ident.QualIdent]
+  | ExternalDataDecl Curry.SpanInfo.SpanInfo Curry.Ident.Ident
+                     [Curry.Ident.Ident]
+  | NewtypeDecl Curry.SpanInfo.SpanInfo Curry.Ident.Ident
+                [Curry.Ident.Ident] NewConstrDecl [Curry.Ident.QualIdent]
+  | TypeDecl Curry.SpanInfo.SpanInfo Curry.Ident.Ident
+             [Curry.Ident.Ident] TypeExpr
+  | TypeSig Curry.SpanInfo.SpanInfo [Curry.Ident.Ident] QualTypeExpr
+  | FunctionDecl Curry.SpanInfo.SpanInfo a Curry.Ident.Ident
+                 [Equation a]
+  | ExternalDecl Curry.SpanInfo.SpanInfo [Var a]
+  | PatternDecl Curry.SpanInfo.SpanInfo (Pattern a) (Rhs a)
+  | FreeDecl Curry.SpanInfo.SpanInfo [Var a]
+  | DefaultDecl Curry.SpanInfo.SpanInfo [TypeExpr]
+  | ClassDecl Curry.SpanInfo.SpanInfo [Constraint] Curry.Ident.Ident
+              Curry.Ident.Ident [Decl a]
+  | InstanceDecl Curry.SpanInfo.SpanInfo [Constraint]
+                 Curry.Ident.QualIdent TypeExpr [Decl a];
+data Equation a = Equation Curry.SpanInfo.SpanInfo (Lhs a) (Rhs a);
+data Export
+  = Export Curry.SpanInfo.SpanInfo Curry.Ident.QualIdent
+  | ExportTypeWith Curry.SpanInfo.SpanInfo Curry.Ident.QualIdent
+                   [Curry.Ident.Ident]
+  | ExportTypeAll Curry.SpanInfo.SpanInfo Curry.Ident.QualIdent
+  | ExportModule Curry.SpanInfo.SpanInfo Curry.Ident.ModuleIdent;
+data ExportSpec = Exporting Curry.SpanInfo.SpanInfo [Export];
+data Expression a
+  = Literal Curry.SpanInfo.SpanInfo a Literal
+  | Variable Curry.SpanInfo.SpanInfo a Curry.Ident.QualIdent
+  | Constructor Curry.SpanInfo.SpanInfo a Curry.Ident.QualIdent
+  | Paren Curry.SpanInfo.SpanInfo (Expression a)
+  | Typed Curry.SpanInfo.SpanInfo (Expression a) QualTypeExpr
+  | Record Curry.SpanInfo.SpanInfo a Curry.Ident.QualIdent
+           [Field (Expression a)]
+  | RecordUpdate Curry.SpanInfo.SpanInfo (Expression a)
+                 [Field (Expression a)]
+  | Tuple Curry.SpanInfo.SpanInfo [Expression a]
+  | List Curry.SpanInfo.SpanInfo a [Expression a]
+  | ListCompr Curry.SpanInfo.SpanInfo (Expression a) [Statement a]
+  | EnumFrom Curry.SpanInfo.SpanInfo (Expression a)
+  | EnumFromThen Curry.SpanInfo.SpanInfo (Expression a)
+                 (Expression a)
+  | EnumFromTo Curry.SpanInfo.SpanInfo (Expression a) (Expression a)
+  | EnumFromThenTo Curry.SpanInfo.SpanInfo (Expression a)
+                   (Expression a) (Expression a)
+  | UnaryMinus Curry.SpanInfo.SpanInfo (Expression a)
+  | Apply Curry.SpanInfo.SpanInfo (Expression a) (Expression a)
+  | InfixApply Curry.SpanInfo.SpanInfo (Expression a) (InfixOp a)
+               (Expression a)
+  | LeftSection Curry.SpanInfo.SpanInfo (Expression a) (InfixOp a)
+  | RightSection Curry.SpanInfo.SpanInfo (InfixOp a) (Expression a)
+  | Lambda Curry.SpanInfo.SpanInfo [Pattern a] (Expression a)
+  | Let Curry.SpanInfo.SpanInfo [Decl a] (Expression a)
+  | Do Curry.SpanInfo.SpanInfo [Statement a] (Expression a)
+  | IfThenElse Curry.SpanInfo.SpanInfo (Expression a) (Expression a)
+               (Expression a)
+  | Case Curry.SpanInfo.SpanInfo CaseType (Expression a) [Alt a];
+data Extension
+  = KnownExtension Curry.Position.Position KnownExtension
+  | UnknownExtension Curry.Position.Position [Prelude.Char];
+data Field a
+  = Field Curry.SpanInfo.SpanInfo Curry.Ident.QualIdent a;
+data FieldDecl
+  = FieldDecl Curry.SpanInfo.SpanInfo [Curry.Ident.Ident] TypeExpr;
+data Import
+  = Import Curry.SpanInfo.SpanInfo Curry.Ident.Ident
+  | ImportTypeWith Curry.SpanInfo.SpanInfo Curry.Ident.Ident
+                   [Curry.Ident.Ident]
+  | ImportTypeAll Curry.SpanInfo.SpanInfo Curry.Ident.Ident;
+data ImportDecl
+  = ImportDecl Curry.SpanInfo.SpanInfo Curry.Ident.ModuleIdent
+               Prelude.Bool (Prelude.Maybe Curry.Ident.ModuleIdent)
+               (Prelude.Maybe ImportSpec);
+data ImportSpec
+  = Importing Curry.SpanInfo.SpanInfo [Import]
+  | Hiding Curry.SpanInfo.SpanInfo [Import];
+data Infix = InfixL | InfixR | Infix;
+data InfixOp a
+  = InfixOp a Curry.Ident.QualIdent
+  | InfixConstr a Curry.Ident.QualIdent;
+type InstanceType = TypeExpr;
+data KnownExtension
+  = AnonFreeVars
+  | CPP
+  | ExistentialQuantification
+  | FunctionalPatterns
+  | NegativeLiterals
+  | NoImplicitPrelude;
+data Lhs a
+  = FunLhs Curry.SpanInfo.SpanInfo Curry.Ident.Ident [Pattern a]
+  | OpLhs Curry.SpanInfo.SpanInfo (Pattern a) Curry.Ident.Ident
+          (Pattern a)
+  | ApLhs Curry.SpanInfo.SpanInfo (Lhs a) [Pattern a];
+data Literal
+  = Char Prelude.Char
+  | Int Prelude.Int
+  | Float Prelude.Float
+  | String [Prelude.Char];
+data Module a
+  = Module Curry.SpanInfo.SpanInfo [ModulePragma]
+           Curry.Ident.ModuleIdent (Prelude.Maybe ExportSpec) [ImportDecl]
+           [Decl a];
+data ModulePragma
+  = LanguagePragma Curry.SpanInfo.SpanInfo [Extension]
+  | OptionsPragma Curry.SpanInfo.SpanInfo (Prelude.Maybe Tool)
+                  [Prelude.Char];
+data NewConstrDecl
+  = NewConstrDecl Curry.SpanInfo.SpanInfo Curry.Ident.Ident TypeExpr
+  | NewRecordDecl Curry.SpanInfo.SpanInfo Curry.Ident.Ident
+                  (Curry.Ident.Ident, TypeExpr);
+data Pattern a
+  = LiteralPattern Curry.SpanInfo.SpanInfo a Literal
+  | NegativePattern Curry.SpanInfo.SpanInfo a Literal
+  | VariablePattern Curry.SpanInfo.SpanInfo a Curry.Ident.Ident
+  | ConstructorPattern Curry.SpanInfo.SpanInfo a
+                       Curry.Ident.QualIdent [Pattern a]
+  | InfixPattern Curry.SpanInfo.SpanInfo a (Pattern a)
+                 Curry.Ident.QualIdent (Pattern a)
+  | ParenPattern Curry.SpanInfo.SpanInfo (Pattern a)
+  | RecordPattern Curry.SpanInfo.SpanInfo a Curry.Ident.QualIdent
+                  [Field (Pattern a)]
+  | TuplePattern Curry.SpanInfo.SpanInfo [Pattern a]
+  | ListPattern Curry.SpanInfo.SpanInfo a [Pattern a]
+  | AsPattern Curry.SpanInfo.SpanInfo Curry.Ident.Ident (Pattern a)
+  | LazyPattern Curry.SpanInfo.SpanInfo (Pattern a)
+  | FunctionPattern Curry.SpanInfo.SpanInfo a Curry.Ident.QualIdent
+                    [Pattern a]
+  | InfixFuncPattern Curry.SpanInfo.SpanInfo a (Pattern a)
+                     Curry.Ident.QualIdent (Pattern a);
+type Precedence = Prelude.Int;
+data QualTypeExpr
+  = QualTypeExpr Curry.SpanInfo.SpanInfo [Constraint] TypeExpr;
+type Qualified = Prelude.Bool;
+data Rhs a
+  = SimpleRhs Curry.SpanInfo.SpanInfo (Expression a) [Decl a]
+  | GuardedRhs Curry.SpanInfo.SpanInfo [CondExpr a] [Decl a];
+data Statement a
+  = StmtExpr Curry.SpanInfo.SpanInfo (Expression a)
+  | StmtDecl Curry.SpanInfo.SpanInfo [Decl a]
+  | StmtBind Curry.SpanInfo.SpanInfo (Pattern a) (Expression a);
+data Tool
+  = KICS2
+  | PAKCS
+  | CYMAKE
+  | FRONTEND
+  | UnknownTool [Prelude.Char];
+data TypeExpr
+  = ConstructorType Curry.SpanInfo.SpanInfo Curry.Ident.QualIdent
+  | ApplyType Curry.SpanInfo.SpanInfo TypeExpr TypeExpr
+  | VariableType Curry.SpanInfo.SpanInfo Curry.Ident.Ident
+  | TupleType Curry.SpanInfo.SpanInfo [TypeExpr]
+  | ListType Curry.SpanInfo.SpanInfo TypeExpr
+  | ArrowType Curry.SpanInfo.SpanInfo TypeExpr TypeExpr
+  | ParenType Curry.SpanInfo.SpanInfo TypeExpr
+  | ForallType Curry.SpanInfo.SpanInfo [Curry.Ident.Ident] TypeExpr;
+data Var a = Var a Curry.Ident.Ident;
+hiding data Curry.SpanInfo.SpanInfo;
+instance Curry.SpanInfo.HasSpanInfo (Alt a) {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq a => Prelude.Eq (Alt a) {
+  (==) 2
+};
+instance Prelude.Read a => Prelude.Read (Alt a) {
+  readsPrec 2
+};
+instance Prelude.Show a => Prelude.Show (Alt a) {
+  showsPrec 2
+};
+instance Prelude.Eq CaseType {
+  (==) 2
+};
+instance Prelude.Read CaseType {
+  readsPrec 2
+};
+instance Prelude.Show CaseType {
+  showsPrec 2
+};
+instance Curry.SpanInfo.HasSpanInfo (CondExpr a) {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq a => Prelude.Eq (CondExpr a) {
+  (==) 2
+};
+instance Prelude.Read a => Prelude.Read (CondExpr a) {
+  readsPrec 2
+};
+instance Prelude.Show a => Prelude.Show (CondExpr a) {
+  showsPrec 2
+};
+hiding data Curry.Ident.Ident;
+instance Curry.SpanInfo.HasSpanInfo ConstrDecl {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq ConstrDecl {
+  (==) 2
+};
+instance Prelude.Read ConstrDecl {
+  readsPrec 2
+};
+instance Prelude.Show ConstrDecl {
+  showsPrec 2
+};
+hiding data Curry.Ident.QualIdent;
+instance Curry.SpanInfo.HasSpanInfo Constraint {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq Constraint {
+  (==) 2
+};
+instance Prelude.Read Constraint {
+  readsPrec 2
+};
+instance Prelude.Show Constraint {
+  showsPrec 2
+};
+hiding data Prelude.Maybe a;
+hiding data Prelude.Int;
+instance Curry.SpanInfo.HasSpanInfo (Decl a) {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq a => Prelude.Eq (Decl a) {
+  (==) 2
+};
+instance Prelude.Read a => Prelude.Read (Decl a) {
+  readsPrec 2
+};
+instance Prelude.Show a => Prelude.Show (Decl a) {
+  showsPrec 2
+};
+instance Curry.SpanInfo.HasSpanInfo (Equation a) {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq a => Prelude.Eq (Equation a) {
+  (==) 2
+};
+instance Prelude.Read a => Prelude.Read (Equation a) {
+  readsPrec 2
+};
+instance Prelude.Show a => Prelude.Show (Equation a) {
+  showsPrec 2
+};
+hiding data Curry.Ident.ModuleIdent;
+instance Curry.SpanInfo.HasSpanInfo Export {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq Export {
+  (==) 2
+};
+instance Prelude.Read Export {
+  readsPrec 2
+};
+instance Prelude.Show Export {
+  showsPrec 2
+};
+instance Curry.SpanInfo.HasSpanInfo ExportSpec {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq ExportSpec {
+  (==) 2
+};
+instance Prelude.Read ExportSpec {
+  readsPrec 2
+};
+instance Prelude.Show ExportSpec {
+  showsPrec 2
+};
+instance Curry.SpanInfo.HasSpanInfo (Expression a) {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq a => Prelude.Eq (Expression a) {
+  (==) 2
+};
+instance Prelude.Read a => Prelude.Read (Expression a) {
+  readsPrec 2
+};
+instance Prelude.Show a => Prelude.Show (Expression a) {
+  showsPrec 2
+};
+hiding data Curry.Position.Position;
+hiding data Prelude.Char;
+instance Prelude.Eq Extension {
+  (==) 2
+};
+instance Prelude.Read Extension {
+  readsPrec 2
+};
+instance Prelude.Show Extension {
+  showsPrec 2
+};
+instance Curry.SpanInfo.HasSpanInfo (Field a) {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq a => Prelude.Eq (Field a) {
+  (==) 2
+};
+instance Prelude.Read a => Prelude.Read (Field a) {
+  readsPrec 2
+};
+instance Prelude.Show a => Prelude.Show (Field a) {
+  showsPrec 2
+};
+instance Curry.SpanInfo.HasSpanInfo FieldDecl {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq FieldDecl {
+  (==) 2
+};
+instance Prelude.Read FieldDecl {
+  readsPrec 2
+};
+instance Prelude.Show FieldDecl {
+  showsPrec 2
+};
+instance Curry.SpanInfo.HasSpanInfo Import {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq Import {
+  (==) 2
+};
+instance Prelude.Read Import {
+  readsPrec 2
+};
+instance Prelude.Show Import {
+  showsPrec 2
+};
+hiding data Prelude.Bool;
+instance Curry.SpanInfo.HasSpanInfo ImportDecl {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq ImportDecl {
+  (==) 2
+};
+instance Prelude.Read ImportDecl {
+  readsPrec 2
+};
+instance Prelude.Show ImportDecl {
+  showsPrec 2
+};
+instance Curry.SpanInfo.HasSpanInfo ImportSpec {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq ImportSpec {
+  (==) 2
+};
+instance Prelude.Read ImportSpec {
+  readsPrec 2
+};
+instance Prelude.Show ImportSpec {
+  showsPrec 2
+};
+instance Prelude.Eq Infix {
+  (==) 2
+};
+instance Prelude.Read Infix {
+  readsPrec 2
+};
+instance Prelude.Show Infix {
+  showsPrec 2
+};
+instance Prelude.Eq a => Prelude.Eq (InfixOp a) {
+  (==) 2
+};
+instance Prelude.Read a => Prelude.Read (InfixOp a) {
+  readsPrec 2
+};
+instance Prelude.Show a => Prelude.Show (InfixOp a) {
+  showsPrec 2
+};
+instance Prelude.Eq KnownExtension {
+  (==) 2
+};
+instance Prelude.Read KnownExtension {
+  readsPrec 2
+};
+instance Prelude.Show KnownExtension {
+  showsPrec 2
+};
+instance Curry.SpanInfo.HasSpanInfo (Lhs a) {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq a => Prelude.Eq (Lhs a) {
+  (==) 2
+};
+instance Prelude.Read a => Prelude.Read (Lhs a) {
+  readsPrec 2
+};
+instance Prelude.Show a => Prelude.Show (Lhs a) {
+  showsPrec 2
+};
+hiding data Prelude.Float;
+instance Prelude.Eq Literal {
+  (==) 2
+};
+instance Prelude.Read Literal {
+  readsPrec 2
+};
+instance Prelude.Show Literal {
+  showsPrec 2
+};
+instance Curry.SpanInfo.HasSpanInfo (Module a) {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq a => Prelude.Eq (Module a) {
+  (==) 2
+};
+instance Prelude.Read a => Prelude.Read (Module a) {
+  readsPrec 2
+};
+instance Prelude.Show a => Prelude.Show (Module a) {
+  showsPrec 2
+};
+instance Curry.SpanInfo.HasSpanInfo ModulePragma {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq ModulePragma {
+  (==) 2
+};
+instance Prelude.Read ModulePragma {
+  readsPrec 2
+};
+instance Prelude.Show ModulePragma {
+  showsPrec 2
+};
+instance Curry.SpanInfo.HasSpanInfo NewConstrDecl {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq NewConstrDecl {
+  (==) 2
+};
+instance Prelude.Read NewConstrDecl {
+  readsPrec 2
+};
+instance Prelude.Show NewConstrDecl {
+  showsPrec 2
+};
+instance Curry.SpanInfo.HasSpanInfo (Pattern a) {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq a => Prelude.Eq (Pattern a) {
+  (==) 2
+};
+instance Prelude.Read a => Prelude.Read (Pattern a) {
+  readsPrec 2
+};
+instance Prelude.Show a => Prelude.Show (Pattern a) {
+  showsPrec 2
+};
+instance Curry.SpanInfo.HasSpanInfo QualTypeExpr {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq QualTypeExpr {
+  (==) 2
+};
+instance Prelude.Read QualTypeExpr {
+  readsPrec 2
+};
+instance Prelude.Show QualTypeExpr {
+  showsPrec 2
+};
+instance Curry.SpanInfo.HasSpanInfo (Rhs a) {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq a => Prelude.Eq (Rhs a) {
+  (==) 2
+};
+instance Prelude.Read a => Prelude.Read (Rhs a) {
+  readsPrec 2
+};
+instance Prelude.Show a => Prelude.Show (Rhs a) {
+  showsPrec 2
+};
+instance Curry.SpanInfo.HasSpanInfo (Statement a) {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq a => Prelude.Eq (Statement a) {
+  (==) 2
+};
+instance Prelude.Read a => Prelude.Read (Statement a) {
+  readsPrec 2
+};
+instance Prelude.Show a => Prelude.Show (Statement a) {
+  showsPrec 2
+};
+instance Prelude.Eq Tool {
+  (==) 2
+};
+instance Prelude.Read Tool {
+  readsPrec 2
+};
+instance Prelude.Show Tool {
+  showsPrec 2
+};
+instance Curry.SpanInfo.HasSpanInfo TypeExpr {
+  setSpanInfo 2;
+  getSpanInfo 1
+};
+instance Prelude.Eq TypeExpr {
+  (==) 2
+};
+instance Prelude.Read TypeExpr {
+  readsPrec 2
+};
+instance Prelude.Show TypeExpr {
+  showsPrec 2
+};
+instance Prelude.Eq a => Prelude.Eq (Var a) {
+  (==) 2
+};
+instance Prelude.Read a => Prelude.Read (Var a) {
+  readsPrec 2
+};
+instance Prelude.Show a => Prelude.Show (Var a) {
+  showsPrec 2
+};
+instance Prelude.Eq Curry.SpanInfo.SpanInfo {
+  (==) 2
+} {-# MODULE Curry.SpanInfo #-};
+instance Prelude.Read Curry.SpanInfo.SpanInfo {
+  readsPrec 2
+} {-# MODULE Curry.SpanInfo #-};
+instance Prelude.Show Curry.SpanInfo.SpanInfo {
+  showsPrec 2
+} {-# MODULE Curry.SpanInfo #-};
+hiding class Curry.SpanInfo.HasSpanInfo a;
+hiding class Prelude.Eq a;
+hiding class Prelude.Read a;
+hiding class Prelude.Show a;
+instance Curry.SpanInfo.HasSpanInfo Curry.Ident.Ident {
+  setSpanInfo 2;
+  getSpanInfo 1
+} {-# MODULE Curry.Ident #-};
+instance Prelude.Eq Curry.Ident.Ident {
+  (==) 2
+} {-# MODULE Curry.Ident #-};
+instance Prelude.Ord Curry.Ident.Ident {
+  compare 2
+} {-# MODULE Curry.Ident #-};
+instance Prelude.Read Curry.Ident.Ident {
+  readsPrec 2
+} {-# MODULE Curry.Ident #-};
+instance Prelude.Show Curry.Ident.Ident {
+  showsPrec 2
+} {-# MODULE Curry.Ident #-};
+instance Curry.SpanInfo.HasSpanInfo Curry.Ident.QualIdent {
+  setSpanInfo 2;
+  getSpanInfo 1
+} {-# MODULE Curry.Ident #-};
+instance Prelude.Eq Curry.Ident.QualIdent {
+  (==) 2
+} {-# MODULE Curry.Ident #-};
+instance Prelude.Ord Curry.Ident.QualIdent {
+  compare 2
+} {-# MODULE Curry.Ident #-};
+instance Prelude.Read Curry.Ident.QualIdent {
+  readsPrec 2
+} {-# MODULE Curry.Ident #-};
+instance Prelude.Show Curry.Ident.QualIdent {
+  showsPrec 2
+} {-# MODULE Curry.Ident #-};
+instance Curry.SpanInfo.HasSpanInfo Curry.Ident.ModuleIdent {
+  setSpanInfo 2;
+  getSpanInfo 1
+} {-# MODULE Curry.Ident #-};
+instance Prelude.Eq Curry.Ident.ModuleIdent {
+  (==) 2
+} {-# MODULE Curry.Ident #-};
+instance Prelude.Ord Curry.Ident.ModuleIdent {
+  compare 2
+} {-# MODULE Curry.Ident #-};
+instance Prelude.Read Curry.Ident.ModuleIdent {
+  readsPrec 2
+} {-# MODULE Curry.Ident #-};
+instance Prelude.Show Curry.Ident.ModuleIdent {
+  showsPrec 2
+} {-# MODULE Curry.Ident #-};
+instance Prelude.Eq Curry.Position.Position {
+  (==) 2
+} {-# MODULE Curry.Position #-};
+instance Prelude.Ord Curry.Position.Position {
+  (<=) 2
+} {-# MODULE Curry.Position #-};
+instance Prelude.Read Curry.Position.Position {
+  readsPrec 2
+} {-# MODULE Curry.Position #-};
+instance Prelude.Show Curry.Position.Position {
+  showsPrec 2
+} {-# MODULE Curry.Position #-};
+instance Curry.SpanInfo.HasSpanInfo Curry.SpanInfo.SpanInfo {
+  setSpanInfo 0;
+  getSpanInfo 0
+} {-# MODULE Curry.SpanInfo #-};
+instance Prelude.Eq () {
+  (==) 2
+} {-# MODULE Prelude #-};
+instance (Prelude.Eq a, Prelude.Eq b) => Prelude.Eq (a, b) {
+  (==) 2
+} {-# MODULE Prelude #-};
+instance (Prelude.Eq a, Prelude.Eq b,
+          Prelude.Eq c) => Prelude.Eq (a, b, c) {
+  (==) 2
+} {-# MODULE Prelude #-};
+instance (Prelude.Eq a, Prelude.Eq b, Prelude.Eq c,
+          Prelude.Eq d) => Prelude.Eq (a, b, c, d) {
+  (==) 2
+} {-# MODULE Prelude #-};
+instance (Prelude.Eq a, Prelude.Eq b, Prelude.Eq c, Prelude.Eq d,
+          Prelude.Eq e) => Prelude.Eq (a, b, c, d, e) {
+  (==) 2
+} {-# MODULE Prelude #-};
+instance (Prelude.Eq a, Prelude.Eq b, Prelude.Eq c, Prelude.Eq d,
+          Prelude.Eq e, Prelude.Eq f) => Prelude.Eq (a, b, c, d, e, f) {
+  (==) 2
+} {-# MODULE Prelude #-};
+instance (Prelude.Eq a, Prelude.Eq b, Prelude.Eq c, Prelude.Eq d,
+          Prelude.Eq e, Prelude.Eq f, Prelude.Eq g) => Prelude.Eq (a, b, c,
+                                                                   d, e, f, g) {
+  (==) 2
+} {-# MODULE Prelude #-};
+instance Prelude.Eq a => Prelude.Eq [a] {
+  (==) 2
+} {-# MODULE Prelude #-};
+instance Prelude.Eq Prelude.Bool {
+  (==) 2
+} {-# MODULE Prelude #-};
+instance Prelude.Eq Prelude.Char {
+  (==) 2
+} {-# MODULE Prelude #-};
+instance (Prelude.Eq a,
+          Prelude.Eq b) => Prelude.Eq (Prelude.Either a b) {
+  (==) 2
+} {-# MODULE Prelude #-};
+instance Prelude.Eq Prelude.Float {
+  (==) 2
+} {-# MODULE Prelude #-};
+instance Prelude.Eq Prelude.IOError {
+  (==) 2
+} {-# MODULE Prelude #-};
+instance Prelude.Eq Prelude.Int {
+  (==) 2
+} {-# MODULE Prelude #-};
+instance Prelude.Eq a => Prelude.Eq (Prelude.Maybe a) {
+  (==) 2
+} {-# MODULE Prelude #-};
+instance Prelude.Eq Prelude.Ordering {
+  (==) 2
+} {-# MODULE Prelude #-};
+instance Prelude.Read () {
+  readsPrec 1
+} {-# MODULE Prelude #-};
+instance (Prelude.Read a, Prelude.Read b) => Prelude.Read (a, b) {
+  readsPrec 1
+} {-# MODULE Prelude #-};
+instance (Prelude.Read a, Prelude.Read b,
+          Prelude.Read c) => Prelude.Read (a, b, c) {
+  readsPrec 1
+} {-# MODULE Prelude #-};
+instance (Prelude.Read a, Prelude.Read b, Prelude.Read c,
+          Prelude.Read d) => Prelude.Read (a, b, c, d) {
+  readsPrec 1
+} {-# MODULE Prelude #-};
+instance (Prelude.Read a, Prelude.Read b, Prelude.Read c,
+          Prelude.Read d, Prelude.Read e) => Prelude.Read (a, b, c, d, e) {
+  readsPrec 1
+} {-# MODULE Prelude #-};
+instance Prelude.Read a => Prelude.Read [a] {
+  readsPrec 1
+} {-# MODULE Prelude #-};
+instance Prelude.Read Prelude.Bool {
+  readsPrec 2
+} {-# MODULE Prelude #-};
+instance Prelude.Read Prelude.Char {
+  readList 1;
+  readsPrec 1
+} {-# MODULE Prelude #-};
+instance (Prelude.Read a,
+          Prelude.Read b) => Prelude.Read (Prelude.Either a b) {
+  readsPrec 2
+} {-# MODULE Prelude #-};
+instance Prelude.Read Prelude.Float {
+  readsPrec 1
+} {-# MODULE Prelude #-};
+instance Prelude.Read Prelude.IOError {
+  readsPrec 2
+} {-# MODULE Prelude #-};
+instance Prelude.Read Prelude.Int {
+  readsPrec 1
+} {-# MODULE Prelude #-};
+instance Prelude.Read a => Prelude.Read (Prelude.Maybe a) {
+  readsPrec 2
+} {-# MODULE Prelude #-};
+instance Prelude.Read Prelude.Ordering {
+  readsPrec 2
+} {-# MODULE Prelude #-};
+instance Prelude.Show () {
+  showsPrec 2
+} {-# MODULE Prelude #-};
+instance (Prelude.Show a, Prelude.Show b) => Prelude.Show (a, b) {
+  showsPrec 2
+} {-# MODULE Prelude #-};
+instance (Prelude.Show a, Prelude.Show b,
+          Prelude.Show c) => Prelude.Show (a, b, c) {
+  showsPrec 2
+} {-# MODULE Prelude #-};
+instance (Prelude.Show a, Prelude.Show b, Prelude.Show c,
+          Prelude.Show d) => Prelude.Show (a, b, c, d) {
+  showsPrec 2
+} {-# MODULE Prelude #-};
+instance (Prelude.Show a, Prelude.Show b, Prelude.Show c,
+          Prelude.Show d, Prelude.Show e) => Prelude.Show (a, b, c, d, e) {
+  showsPrec 2
+} {-# MODULE Prelude #-};
+instance Prelude.Show a => Prelude.Show [a] {
+  showsPrec 1
+} {-# MODULE Prelude #-};
+instance Prelude.Show Prelude.Bool {
+  showsPrec 2
+} {-# MODULE Prelude #-};
+instance Prelude.Show Prelude.Char {
+  showList 1;
+  showsPrec 2
+} {-# MODULE Prelude #-};
+instance (Prelude.Show a,
+          Prelude.Show b) => Prelude.Show (Prelude.Either a b) {
+  showsPrec 2
+} {-# MODULE Prelude #-};
+instance Prelude.Show Prelude.Float {
+  showsPrec 0
+} {-# MODULE Prelude #-};
+instance Prelude.Show Prelude.IOError {
+  showsPrec 2
+} {-# MODULE Prelude #-};
+instance Prelude.Show Prelude.Int {
+  showsPrec 0
+} {-# MODULE Prelude #-};
+instance Prelude.Show a => Prelude.Show (Prelude.Maybe a) {
+  showsPrec 2
+} {-# MODULE Prelude #-};
+instance Prelude.Show Prelude.Ordering {
+  showsPrec 2
+} {-# MODULE Prelude #-};
+hiding class Prelude.Eq a => Prelude.Ord a;
+hiding data Prelude.Either a b;
+hiding data Prelude.IOError;
+hiding data Prelude.Ordering;
+instance Prelude.Ord () {
+  (<=) 2
+} {-# MODULE Prelude #-};
+instance (Prelude.Ord a, Prelude.Ord b) => Prelude.Ord (a, b) {
+  (<=) 2
+} {-# MODULE Prelude #-};
+instance (Prelude.Ord a, Prelude.Ord b,
+          Prelude.Ord c) => Prelude.Ord (a, b, c) {
+  (<=) 2
+} {-# MODULE Prelude #-};
+instance (Prelude.Ord a, Prelude.Ord b, Prelude.Ord c,
+          Prelude.Ord d) => Prelude.Ord (a, b, c, d) {
+  (<=) 2
+} {-# MODULE Prelude #-};
+instance (Prelude.Ord a, Prelude.Ord b, Prelude.Ord c,
+          Prelude.Ord d, Prelude.Ord e) => Prelude.Ord (a, b, c, d, e) {
+  (<=) 2
+} {-# MODULE Prelude #-};
+instance Prelude.Ord a => Prelude.Ord [a] {
+  (<=) 2
+} {-# MODULE Prelude #-};
+instance Prelude.Ord Prelude.Bool {
+  (<=) 2
+} {-# MODULE Prelude #-};
+instance Prelude.Ord Prelude.Char {
+  (<=) 2
+} {-# MODULE Prelude #-};
+instance (Prelude.Ord a,
+          Prelude.Ord b) => Prelude.Ord (Prelude.Either a b) {
+  (<=) 2
+} {-# MODULE Prelude #-};
+instance Prelude.Ord Prelude.Float {
+  (<=) 2
+} {-# MODULE Prelude #-};
+instance Prelude.Ord Prelude.Int {
+  (<=) 2
+} {-# MODULE Prelude #-};
+instance Prelude.Ord a => Prelude.Ord (Prelude.Maybe a) {
+  (<=) 2
+} {-# MODULE Prelude #-};
+instance Prelude.Ord Prelude.Ordering {
+  (<=) 2
+} {-# MODULE Prelude #-}
+}
