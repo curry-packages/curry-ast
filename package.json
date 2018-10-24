@@ -9,7 +9,7 @@
         "kics2": ">= 2.0.0"
     },
     "dependencies": {
-        "base" : ">= 1.0.0, < 2.0.0"
+        "base" : ">= 2.0.0"
     },
     "exportedModules": [ "Curry.Types",
                          "Curry.Files",

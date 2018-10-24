@@ -1,13 +1,12 @@
 module Curry.Files where
 
-import Directory       (doesFileExist)
-import FileGoodies     (getFileInPath, lookupFileInPath)
-import FilePath        (takeFileName, (</>), (<.>))
-import Distribution    ( FrontendParams, FrontendTarget (..), defaultParams
-                       , setQuiet, inCurrySubdir, stripCurrySuffix
-                       , callFrontend, callFrontendWithParams
-                       , lookupModuleSourceInLoadPath, getLoadPathForModule
-                       )
+import System.Directory (doesFileExist, getFileWithSuffix)
+import System.FilePath  (takeFileName, (</>), (<.>))
+import Distribution     ( FrontendParams, FrontendTarget (..), defaultParams
+                        , setQuiet, inCurrySubdir, stripCurrySuffix
+                        , callFrontend, callFrontendWithParams
+                        , lookupModuleSourceInLoadPath, getLoadPathForModule
+                        )
 
 import Curry.Types
 
@@ -28,7 +27,7 @@ readShortASTWithParseOptions progname options = do
   case mbsrc of
     Nothing -> do -- no source file, try to find shortAST file in load path
       loadpath <- getLoadPathForModule progname
-      filename <- getFileInPath (shortASTFileName (takeFileName progname))
+      filename <- getFileWithSuffix (shortASTFileName (takeFileName progname))
                                 [""] loadpath
       readASTFile filename
     Just (dir,_) -> do
@@ -42,7 +41,7 @@ readFullASTWithParseOptions progname options = do
   case mbsrc of
     Nothing -> do -- no source file, try to find AST file in load path
       loadpath <- getLoadPathForModule progname
-      filename <- getFileInPath (fullASTFileName (takeFileName progname))
+      filename <- getFileWithSuffix (fullASTFileName (takeFileName progname))
                                 [""] loadpath
       readASTFile filename
     Just (dir,_) -> do
