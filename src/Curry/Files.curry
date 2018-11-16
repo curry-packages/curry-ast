@@ -48,7 +48,7 @@ readFullASTWithParseOptions progname options = do
       readASTFile filename
     Just (dir,_) -> do
       callFrontendWithParams AST options progname
-      readASTFile (shortASTFileName (dir </> takeFileName progname))
+      readASTFile (fullASTFileName (dir </> takeFileName progname))
 
 -- | Get the short-AST filename of a Curry programm
 shortASTFileName :: String -> String
