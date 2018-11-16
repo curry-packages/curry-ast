@@ -1,13 +1,14 @@
 module Curry.Files where
 
-import Directory       (doesFileExist)
-import FileGoodies     (getFileInPath, lookupFileInPath)
-import FilePath        (takeFileName, (</>), (<.>))
-import Distribution    ( FrontendParams, FrontendTarget (..), defaultParams
-                       , setQuiet, inCurrySubdir, stripCurrySuffix
-                       , callFrontend, callFrontendWithParams
-                       , lookupModuleSourceInLoadPath, getLoadPathForModule
-                       )
+import Directory       ( doesFileExist )
+import FileGoodies     ( getFileInPath, lookupFileInPath )
+import FilePath        ( takeFileName, (</>), (<.>) )
+import Distribution    ( lookupModuleSourceInLoadPath, getLoadPathForModule
+                       , inCurrySubdir, stripCurrySuffix )
+
+import System.FrontendExec ( FrontendParams, FrontendTarget (..), defaultParams
+                           , setQuiet, callFrontend, callFrontendWithParams
+                           )
 
 import Curry.Types
 
@@ -49,11 +50,11 @@ readFullASTWithParseOptions progname options = do
       callFrontendWithParams AST options progname
       readASTFile (shortASTFileName (dir </> takeFileName progname))
 
--- | Get the short-AST filename of a curry programm
+-- | Get the short-AST filename of a Curry programm
 shortASTFileName :: String -> String
 shortASTFileName prog = inCurrySubdir (stripCurrySuffix prog) <.> "sast"
 
--- | Get the AST filename of a curry programm
+-- | Get the AST filename of a Curry programm
 fullASTFileName :: String -> String
 fullASTFileName prog = inCurrySubdir (stripCurrySuffix prog) <.> "ast"
 

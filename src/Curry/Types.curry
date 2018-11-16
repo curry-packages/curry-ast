@@ -3,7 +3,7 @@
 -- Author     : Kai-Oliver Prott
 -- Version    : August 2018
 --
--- An implementation of the curry AST from curry-frontend
+-- An implementation of the Curry AST from curry-frontend
 module Curry.Types where
 
 import Curry.SpanInfo
