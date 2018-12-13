@@ -3,9 +3,9 @@ module Curry.Files where
 import Directory       ( doesFileExist )
 import FileGoodies     ( getFileInPath, lookupFileInPath )
 import FilePath        ( takeFileName, (</>), (<.>) )
-import Distribution    ( lookupModuleSourceInLoadPath, getLoadPathForModule
-                       , inCurrySubdir, stripCurrySuffix )
 
+import System.CurryPath    ( lookupModuleSourceInLoadPath, getLoadPathForModule
+                           , inCurrySubdir, stripCurrySuffix )
 import System.FrontendExec ( FrontendParams, FrontendTarget (..), defaultParams
                            , setQuiet, callFrontend, callFrontendWithParams
                            )
