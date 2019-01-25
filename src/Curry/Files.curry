@@ -3,6 +3,7 @@ module Curry.Files where
 import Directory       ( doesFileExist )
 import FileGoodies     ( getFileInPath, lookupFileInPath )
 import FilePath        ( takeFileName, (</>), (<.>) )
+import ReadShowTerm    ( readUnqualifiedTerm ) -- for faster reading
 
 import System.CurryPath    ( lookupModuleSourceInLoadPath, getLoadPathForModule
                            , inCurrySubdir, stripCurrySuffix )
@@ -62,7 +63,13 @@ fullASTFileName prog = inCurrySubdir (stripCurrySuffix prog) <.> "ast"
 readASTFile :: String -> IO (Module ())
 readASTFile filename = do
   filecontents <- readShortASTFileRaw filename
-  return (read filecontents)
+  -- read AST file...
+  -- ...with generated Read class instances (slow!):
+  --return (read filecontents)
+  -- ...with built-in generic read operation (faster):
+  return (readUnqualifiedTerm ["Curry.Types", "Curry.Ident", "Curry.Position",
+                               "Curry.Span", "Curry.SpanInfo", "Prelude"]
+                              filecontents)
 
 -- | Reads the text from a specified file containing an AST
 readShortASTFileRaw :: String -> IO String
