@@ -17,3 +17,7 @@ rowDist NoPos           NoPos           = 0
 rowDist (Position _  _) NoPos           = 0
 rowDist NoPos           (Position _  _) = 0
 rowDist (Position r1 _) (Position r2 _) = r2 - r1
+
+incr :: Position -> Int -> Position
+incr NoPos              _ = NoPos
+incr (Position row col) n = Position row (col + n)

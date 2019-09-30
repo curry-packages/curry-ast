@@ -2,17 +2,12 @@ module Curry.Files where
 
 import System.Directory (doesFileExist, getFileWithSuffix)
 import System.FilePath  (takeFileName, (</>), (<.>))
-import Distribution     ( FrontendParams, FrontendTarget (..), defaultParams
-                        , setQuiet, inCurrySubdir, stripCurrySuffix
-                        , callFrontend, callFrontendWithParams
-                        , lookupModuleSourceInLoadPath, getLoadPathForModule
-                        )
-
 import System.CurryPath    ( lookupModuleSourceInLoadPath, getLoadPathForModule
                            , inCurrySubdir, stripCurrySuffix )
 import System.FrontendExec ( FrontendParams, FrontendTarget (..), defaultParams
                            , setQuiet, callFrontend, callFrontendWithParams
                            )
+import ReadShowTerm
 
 import Curry.Types
 
