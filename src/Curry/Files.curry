@@ -8,6 +8,12 @@ import Distribution     ( FrontendParams, FrontendTarget (..), defaultParams
                         , lookupModuleSourceInLoadPath, getLoadPathForModule
                         )
 
+import System.CurryPath    ( lookupModuleSourceInLoadPath, getLoadPathForModule
+                           , inCurrySubdir, stripCurrySuffix )
+import System.FrontendExec ( FrontendParams, FrontendTarget (..), defaultParams
+                           , setQuiet, callFrontend, callFrontendWithParams
+                           )
+
 import Curry.Types
 
 -- | Reads the short-AST from a specified module
@@ -46,13 +52,13 @@ readFullASTWithParseOptions progname options = do
       readASTFile filename
     Just (dir,_) -> do
       callFrontendWithParams AST options progname
-      readASTFile (shortASTFileName (dir </> takeFileName progname))
+      readASTFile (fullASTFileName (dir </> takeFileName progname))
 
--- | Get the short-AST filename of a curry programm
+-- | Get the short-AST filename of a Curry programm
 shortASTFileName :: String -> String
 shortASTFileName prog = inCurrySubdir (stripCurrySuffix prog) <.> "sast"
 
--- | Get the AST filename of a curry programm
+-- | Get the AST filename of a Curry programm
 fullASTFileName :: String -> String
 fullASTFileName prog = inCurrySubdir (stripCurrySuffix prog) <.> "ast"
 
@@ -60,7 +66,13 @@ fullASTFileName prog = inCurrySubdir (stripCurrySuffix prog) <.> "ast"
 readASTFile :: String -> IO (Module ())
 readASTFile filename = do
   filecontents <- readShortASTFileRaw filename
-  return (read filecontents)
+  -- read AST file...
+  -- ...with generated Read class instances (slow!):
+  --return (read filecontents)
+  -- ...with built-in generic read operation (faster):
+  return (readUnqualifiedTerm ["Curry.Types", "Curry.Ident", "Curry.Position",
+                               "Curry.Span", "Curry.SpanInfo", "Prelude"]
+                              filecontents)
 
 -- | Reads the text from a specified file containing an AST
 readShortASTFileRaw :: String -> IO String
