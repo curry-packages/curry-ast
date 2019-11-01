@@ -72,9 +72,9 @@ data Infix
     deriving (Eq, Read, Show)
 
 data ConstrDecl
-  = ConstrDecl SpanInfo [Ident] Context Ident [TypeExpr]
-  | ConOpDecl  SpanInfo [Ident] Context TypeExpr Ident TypeExpr
-  | RecordDecl SpanInfo [Ident] Context Ident [FieldDecl]
+  = ConstrDecl SpanInfo Ident [TypeExpr]
+  | ConOpDecl  SpanInfo TypeExpr Ident TypeExpr
+  | RecordDecl SpanInfo Ident [FieldDecl]
     deriving (Eq, Read, Show)
 
 data NewConstrDecl
@@ -295,13 +295,13 @@ instance HasSpanInfo Import where
   setSpanInfo sp (ImportTypeAll _ qid)     = ImportTypeAll sp qid
 
 instance HasSpanInfo ConstrDecl where
-  getSpanInfo (ConstrDecl sp _ _ _ _)   = sp
-  getSpanInfo (ConOpDecl  sp _ _ _ _ _) = sp
-  getSpanInfo (RecordDecl sp _ _ _ _)   = sp
+  getSpanInfo (ConstrDecl sp _ _)   = sp
+  getSpanInfo (ConOpDecl  sp _ _ _) = sp
+  getSpanInfo (RecordDecl sp _ _)   = sp
 
-  setSpanInfo sp (ConstrDecl _ tvar ctx idt ty) = ConstrDecl sp tvar ctx idt ty
-  setSpanInfo sp (ConOpDecl  _ tvar ctx ty1 idt ty2) = ConOpDecl sp tvar ctx ty1 idt ty2
-  setSpanInfo sp (RecordDecl _ tvar ctx idt fd) = RecordDecl sp tvar ctx idt fd
+  setSpanInfo sp (ConstrDecl _ idt ty) = ConstrDecl sp idt ty
+  setSpanInfo sp (ConOpDecl  _ ty1 idt ty2) = ConOpDecl sp ty1 idt ty2
+  setSpanInfo sp (RecordDecl _ idt fd) = RecordDecl sp idt fd
 
 instance HasSpanInfo NewConstrDecl where
   getSpanInfo (NewConstrDecl sp _ _)   = sp
