@@ -61,7 +61,7 @@ instance HasSpanInfo QualIdent where
   updateEndPos i = case i of
     QualIdent (SpanInfo _ [_,ss]) _ _
       -> setEndPosition (end ss) i
-    _ -> setEndPosition (incr (getStartPosition i) (identLength i - 1)) i
+    _ -> setEndPosition (incr (getStartPosition i) (qIdentLength i - 1)) i
 
 qIdentLength :: QualIdent -> Int
 qIdentLength (QualIdent _ (Just m) i) = identLength i + mIdentLength m
