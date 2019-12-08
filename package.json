@@ -1,6 +1,6 @@
 {
     "name": "curry-ast",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "author": "Kai-Oliver Prott <stu126209@mail.uni-kiel.de>",
     "synopsis": "Libaries to represent Curry programs",
     "category": [ "Metaprogramming" ],

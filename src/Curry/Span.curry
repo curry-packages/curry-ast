@@ -9,9 +9,9 @@ module Curry.Span (
  -- * Selectors
  start, end,
  -- * Transformer,
- isSpan, isNoSpan, fromPosition, stripStart,
+ isSpan, isNoSpan, fromPosition, stripStart, span2Pos, combineSpans, addSpan,
  -- * Distance management
- vertDist, isAfter, isBefore, isBeforeList
+ vertDist, isAfter, isBefore, isBeforeList, spanLength
 ) where
 
 import Curry.Position
@@ -78,3 +78,21 @@ isBefore (Span _ e) (Span s _) = e <= s
 isBeforeList :: Span -> [Span] -> Bool
 isBeforeList _   []      = True
 isBeforeList sp1 (sp2:_) = isBefore sp1 sp2
+
+span2Pos :: Span -> Position
+span2Pos (Span p _) = p
+span2Pos NoSpan     = NoPos
+
+combineSpans :: Span -> Span -> Span
+combineSpans sp1 sp2 = Span s e
+  where s = start sp1
+        e = end sp2
+
+addSpan :: Span -> (a, [Span]) -> (a, [Span])
+addSpan sp (a, ss) = (a, sp:ss)
+
+spanLength :: Span -> (Int, Int)
+spanLength sp = case sp of
+  Span (Position x1 y1) (Position x2 y2)
+    -> (x2-x1, y2-y1)
+  _ -> (0, 0)
