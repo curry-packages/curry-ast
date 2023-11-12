@@ -20,7 +20,7 @@
                          "Curry.Span" ,
                          "Curry.SpanInfo" ],
     "source": {
-        "git": "https://git.ps.informatik.uni-kiel.de/curry-packages/curry-ast.git",
+        "git": "https://github.com/curry-packages/curry-ast.git",
         "tag": "$version"
     }
 }
