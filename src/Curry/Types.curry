@@ -1,17 +1,18 @@
 -- |
 -- Description: AST for curry code
 -- Author     : Kai-Oliver Prott
--- Version    : August 2018
+-- Version    : October 2024
 --
 -- An implementation of the Curry AST from curry-frontend
 module Curry.Types where
 
+import Curry.Span
 import Curry.SpanInfo
 import Curry.Ident
 import Curry.Position
 
 -- | This datatype is copied from curry-base.
-data Module a = Module SpanInfo [ModulePragma] ModuleIdent
+data Module a = Module SpanInfo LayoutInfo [ModulePragma] ModuleIdent
                        (Maybe ExportSpec) [ImportDecl] [Decl a]
     deriving (Eq, Read, Show)
 
@@ -48,19 +49,19 @@ data Import
     deriving (Eq, Read, Show)
 
 data Decl a
-  = InfixDecl        SpanInfo Infix (Maybe Precedence) [Ident]         -- infixl 5 (op), `fun`
-  | DataDecl         SpanInfo Ident [Ident] [ConstrDecl] [QualIdent]   -- data C a b = C1 a | C2 b deriving (D, ...)
+  = InfixDecl        SpanInfo Infix (Maybe Precedence) [Ident]                     -- infixl 5 (op), `fun`
+  | DataDecl         SpanInfo Ident [Ident] [ConstrDecl] [QualIdent]               -- data C a b = C1 a | C2 b deriving (D, ...)
   | ExternalDataDecl SpanInfo Ident [Ident]
-  | NewtypeDecl      SpanInfo Ident [Ident] NewConstrDecl [QualIdent]  -- newtype C a b = C a b deriving (D, ...)
-  | TypeDecl         SpanInfo Ident [Ident] TypeExpr                   -- type C a b = D a b
-  | TypeSig          SpanInfo [Ident] QualTypeExpr                     -- f, g :: Bool
-  | FunctionDecl     SpanInfo a Ident [Equation a]                     -- f True = 1 ; f False = 0
-  | ExternalDecl     SpanInfo [Var a]                                  -- f, g external
-  | PatternDecl      SpanInfo (Pattern a) (Rhs a)                      -- Just x = ...
-  | FreeDecl         SpanInfo [Var a]                                  -- x, y free
-  | DefaultDecl      SpanInfo [TypeExpr]                               -- default (Int, Float)
-  | ClassDecl        SpanInfo Context Ident Ident [Decl a]             -- class C a => D a where {TypeSig|InfixDecl|FunctionDecl}
-  | InstanceDecl     SpanInfo Context QualIdent InstanceType [Decl a]  -- instance C a => M.D (N.T a b c) where {FunctionDecl}
+  | NewtypeDecl      SpanInfo Ident [Ident] NewConstrDecl [QualIdent]              -- newtype C a b = C a b deriving (D, ...)
+  | TypeDecl         SpanInfo Ident [Ident] TypeExpr                               -- type C a b = D a b
+  | TypeSig          SpanInfo [Ident] QualTypeExpr                                 -- f, g :: Bool
+  | FunctionDecl     SpanInfo a Ident [Equation a]                                 -- f True = 1 ; f False = 0
+  | ExternalDecl     SpanInfo [Var a]                                              -- f, g external
+  | PatternDecl      SpanInfo (Pattern a) (Rhs a)                                  -- Just x = ...
+  | FreeDecl         SpanInfo [Var a]                                              -- x, y free
+  | DefaultDecl      SpanInfo [TypeExpr]                                           -- default (Int, Float)
+  | ClassDecl        SpanInfo LayoutInfo Context Ident [Ident] [FunDep] [Decl a]   -- class C a => D a b | a -> b where {TypeSig|InfixDecl|FunctionDecl}
+  | InstanceDecl     SpanInfo LayoutInfo Context QualIdent [InstanceType] [Decl a] -- instance C a => M.D (N.T a b c) where {FunctionDecl}
   deriving (Eq, Read, Show)
 
 type Precedence = Int
@@ -101,12 +102,15 @@ data QualTypeExpr = QualTypeExpr SpanInfo Context TypeExpr
 
 type Context = [Constraint]
 
-data Constraint = Constraint SpanInfo QualIdent TypeExpr
+data Constraint = Constraint SpanInfo QualIdent [TypeExpr]
   deriving (Eq, Read, Show)
 
 type InstanceType = TypeExpr
 
-data Equation a = Equation SpanInfo (Lhs a) (Rhs a)
+data FunDep = FunDep SpanInfo [Ident] [Ident]
+  deriving (Eq, Read, Show)
+
+data Equation a = Equation SpanInfo (Maybe a) (Lhs a) (Rhs a)
   deriving (Eq, Read, Show)
 
 data Lhs a
@@ -116,8 +120,8 @@ data Lhs a
   deriving (Eq, Read, Show)
 
 data Rhs a
-  = SimpleRhs  SpanInfo (Expression a) [Decl a]
-  | GuardedRhs SpanInfo [CondExpr a] [Decl a]
+  = SimpleRhs  SpanInfo LayoutInfo (Expression a) [Decl a]
+  | GuardedRhs SpanInfo LayoutInfo [CondExpr a]   [Decl a]
   deriving (Eq, Read, Show)
 
 data CondExpr a = CondExpr SpanInfo (Expression a) (Expression a)
@@ -167,10 +171,10 @@ data Expression a
   | LeftSection       SpanInfo (Expression a) (InfixOp a)
   | RightSection      SpanInfo (InfixOp a) (Expression a)
   | Lambda            SpanInfo [Pattern a] (Expression a)
-  | Let               SpanInfo [Decl a] (Expression a)
-  | Do                SpanInfo [Statement a] (Expression a)
+  | Let               SpanInfo LayoutInfo [Decl a] (Expression a)
+  | Do                SpanInfo LayoutInfo [Statement a] (Expression a)
   | IfThenElse        SpanInfo (Expression a) (Expression a) (Expression a)
-  | Case              SpanInfo CaseType (Expression a) [Alt a]
+  | Case              SpanInfo LayoutInfo CaseType (Expression a) [Alt a]
   deriving (Eq, Read, Show)
 
 data InfixOp a
@@ -180,7 +184,7 @@ data InfixOp a
 
 data Statement a
   = StmtExpr SpanInfo (Expression a)
-  | StmtDecl SpanInfo [Decl a]
+  | StmtDecl SpanInfo LayoutInfo [Decl a]
   | StmtBind SpanInfo (Pattern a) (Expression a)
   deriving (Eq, Read, Show)
 
@@ -198,59 +202,71 @@ data Field a = Field SpanInfo QualIdent a
 data Var a = Var a Ident
   deriving (Eq, Read, Show)
 
+data Goal a = Goal SpanInfo LayoutInfo (Expression a) [Decl a]
+  deriving (Eq, Read, Show)
+
 data Extension
-  = KnownExtension   Position KnownExtension
-  | UnknownExtension Position String
+  = KnownExtension   SpanInfo KnownExtension
+  | UnknownExtension SpanInfo String
   deriving (Eq, Read, Show)
 
 data KnownExtension
-  = AnonFreeVars
-  | CPP
-  | ExistentialQuantification
-  | FunctionalPatterns
-  | NegativeLiterals
-  | NoImplicitPrelude
+  = AnonFreeVars              -- ^ anonymous free variables
+  | CPP                       -- ^ C preprocessor
+  | FlexibleContexts          -- ^ no restrictions on context form
+  | FlexibleInstances         -- ^ no restrictions on instance syntax
+  | FunctionalDependencies    -- ^ functional dependencies
+  | FunctionalPatterns        -- ^ functional patterns
+  | MultiParamTypeClasses     -- ^ multi-parameter type classes
+  | NegativeLiterals          -- ^ negative literals
+  | NoAnonFreeVars            -- ^ no anonymous free variables
+  | NoFunctionalPatterns      -- ^ no functional patterns
+  | NoImplicitPrelude         -- ^ no implicit import of the prelude
+  | NoDataDeriving            -- ^ no implicit deriving of the Data class
   deriving (Eq, Read, Show)
 
-data Tool = KICS2 | PAKCS | CYMAKE | FRONTEND | UnknownTool String
-  deriving (Eq, Read, Show)
+data KnownTool = KICS2 | PAKCS | CYMAKE | FRONTEND
+    deriving (Eq, Read, Show, Enum, Bounded)
+
+data Tool = KnownTool KnownTool | UnknownTool String
+    deriving (Eq, Read, Show)
 
 instance HasSpanInfo (Module a) where
-  getSpanInfo (Module sp _ _ _ _ _) = sp
-  setSpanInfo sp (Module _ ps m es is ds) = Module sp ps m es is ds
+  getSpanInfo (Module sp _ _ _ _ _ _) = sp
+  setSpanInfo sp (Module _ li ps m es is ds) = Module sp li ps m es is ds
 
 instance HasSpanInfo (Decl a) where
-  getSpanInfo (InfixDecl        sp _ _ _)   = sp
-  getSpanInfo (DataDecl         sp _ _ _ _) = sp
-  getSpanInfo (ExternalDataDecl sp _ _)     = sp
-  getSpanInfo (NewtypeDecl      sp _ _ _ _) = sp
-  getSpanInfo (TypeDecl         sp _ _ _)   = sp
-  getSpanInfo (TypeSig          sp _ _)     = sp
-  getSpanInfo (FunctionDecl     sp _ _ _)   = sp
-  getSpanInfo (ExternalDecl     sp _)       = sp
-  getSpanInfo (PatternDecl      sp _ _)     = sp
-  getSpanInfo (FreeDecl         sp _)       = sp
-  getSpanInfo (DefaultDecl      sp _)       = sp
-  getSpanInfo (ClassDecl        sp _ _ _ _) = sp
-  getSpanInfo (InstanceDecl     sp _ _ _ _) = sp
+  getSpanInfo (InfixDecl        sp _ _ _)       = sp
+  getSpanInfo (DataDecl         sp _ _ _ _)     = sp
+  getSpanInfo (ExternalDataDecl sp _ _)         = sp
+  getSpanInfo (NewtypeDecl      sp _ _ _ _)     = sp
+  getSpanInfo (TypeDecl         sp _ _ _)       = sp
+  getSpanInfo (TypeSig          sp _ _)         = sp
+  getSpanInfo (FunctionDecl     sp _ _ _)       = sp
+  getSpanInfo (ExternalDecl     sp _)           = sp
+  getSpanInfo (PatternDecl      sp _ _)         = sp
+  getSpanInfo (FreeDecl         sp _)           = sp
+  getSpanInfo (DefaultDecl      sp _)           = sp
+  getSpanInfo (ClassDecl        sp _ _ _ _ _ _) = sp
+  getSpanInfo (InstanceDecl     sp _ _ _ _ _)   = sp
 
-  setSpanInfo sp (InfixDecl _ fix prec ops) = InfixDecl sp fix prec ops
-  setSpanInfo sp (DataDecl _ tc tvs cs clss) = DataDecl sp tc tvs cs clss
-  setSpanInfo sp (ExternalDataDecl _ tc tvs) = ExternalDataDecl sp tc tvs
-  setSpanInfo sp (NewtypeDecl _ tc tvs nc clss) = NewtypeDecl sp tc tvs nc clss
-  setSpanInfo sp (TypeDecl _ tc tvs ty) = TypeDecl sp tc tvs ty
-  setSpanInfo sp (TypeSig _ fs qty) = TypeSig sp fs qty
-  setSpanInfo sp (FunctionDecl _ a f' eqs) = FunctionDecl sp a f' eqs
-  setSpanInfo sp (ExternalDecl _ vs) = ExternalDecl sp vs
-  setSpanInfo sp (PatternDecl _ t rhs) = PatternDecl sp t rhs
-  setSpanInfo sp (FreeDecl _ vs) = FreeDecl sp vs
-  setSpanInfo sp (DefaultDecl _ tys) = DefaultDecl sp tys
-  setSpanInfo sp (ClassDecl _ cx cls clsvar ds) = ClassDecl sp cx cls clsvar ds
-  setSpanInfo sp (InstanceDecl _ cx qcls inst ds) = InstanceDecl sp cx qcls inst ds
+  setSpanInfo sp (InfixDecl        _ fix prec ops)           = InfixDecl sp fix prec ops
+  setSpanInfo sp (DataDecl         _ tc tvs cs clss)         = DataDecl sp tc tvs cs clss
+  setSpanInfo sp (ExternalDataDecl _ tc tvs)                 = ExternalDataDecl sp tc tvs
+  setSpanInfo sp (NewtypeDecl      _ tc tvs nc clss)         = NewtypeDecl sp tc tvs nc clss
+  setSpanInfo sp (TypeDecl         _ tc tvs ty)              = TypeDecl sp tc tvs ty
+  setSpanInfo sp (TypeSig          _ fs qty)                 = TypeSig sp fs qty
+  setSpanInfo sp (FunctionDecl     _ a f' eqs)               = FunctionDecl sp a f' eqs
+  setSpanInfo sp (ExternalDecl     _ vs)                     = ExternalDecl sp vs
+  setSpanInfo sp (PatternDecl      _ t rhs)                  = PatternDecl sp t rhs
+  setSpanInfo sp (FreeDecl         _ vs)                     = FreeDecl sp vs
+  setSpanInfo sp (DefaultDecl      _ tys)                    = DefaultDecl sp tys
+  setSpanInfo sp (ClassDecl     _ li cx cls clsvar fdeps ds) = ClassDecl sp li cx cls clsvar fdeps ds
+  setSpanInfo sp (InstanceDecl  _ li cx qcls inst ds)        = InstanceDecl sp li cx qcls inst ds
 
 instance HasSpanInfo (Equation a) where
-  getSpanInfo (Equation spi _ _) = spi
-  setSpanInfo spi (Equation _ lhs rhs) = Equation spi lhs rhs
+  getSpanInfo (Equation spi _ _ _) = spi
+  setSpanInfo spi (Equation _ t lhs rhs) = Equation spi t lhs rhs
 
 instance HasSpanInfo ModulePragma where
   getSpanInfo (LanguagePragma sp _  ) = sp
@@ -299,9 +315,9 @@ instance HasSpanInfo ConstrDecl where
   getSpanInfo (ConOpDecl  sp _ _ _) = sp
   getSpanInfo (RecordDecl sp _ _)   = sp
 
-  setSpanInfo sp (ConstrDecl _ idt ty) = ConstrDecl sp idt ty
+  setSpanInfo sp (ConstrDecl _ idt ty)      = ConstrDecl sp idt ty
   setSpanInfo sp (ConOpDecl  _ ty1 idt ty2) = ConOpDecl sp ty1 idt ty2
-  setSpanInfo sp (RecordDecl _ idt fd) = RecordDecl sp idt fd
+  setSpanInfo sp (RecordDecl _ idt fd)      = RecordDecl sp idt fd
 
 instance HasSpanInfo NewConstrDecl where
   getSpanInfo (NewConstrDecl sp _ _)   = sp
@@ -351,11 +367,11 @@ instance HasSpanInfo (Lhs a) where
   setSpanInfo sp (ApLhs  _ lhs ps)    = ApLhs sp lhs ps
 
 instance HasSpanInfo (Rhs a) where
-  getSpanInfo (SimpleRhs sp _ _)  = sp
-  getSpanInfo (GuardedRhs sp _ _) = sp
+  getSpanInfo (SimpleRhs sp _ _ _)  = sp
+  getSpanInfo (GuardedRhs sp _ _ _) = sp
 
-  setSpanInfo sp (SimpleRhs _ ex ds)  = SimpleRhs sp ex ds
-  setSpanInfo sp (GuardedRhs _ cs ds) = GuardedRhs sp cs ds
+  setSpanInfo sp (SimpleRhs _ li ex ds)  = SimpleRhs sp li ex ds
+  setSpanInfo sp (GuardedRhs _ li cs ds) = GuardedRhs sp li cs ds
 
 instance HasSpanInfo (CondExpr a) where
     getSpanInfo (CondExpr sp _ _) = sp
@@ -376,79 +392,79 @@ instance HasSpanInfo (Pattern a) where
   getSpanInfo (FunctionPattern sp _ _ _)    = sp
   getSpanInfo (InfixFuncPattern sp _ _ _ _) = sp
 
-  setSpanInfo sp (LiteralPattern _ a l) = LiteralPattern sp a l
-  setSpanInfo sp (NegativePattern _ a l) = NegativePattern sp a l
-  setSpanInfo sp (VariablePattern _ a v) = VariablePattern sp a v
-  setSpanInfo sp (ConstructorPattern _ a c ts) = ConstructorPattern sp a c ts
-  setSpanInfo sp (InfixPattern _ a t1 op t2) = InfixPattern sp a t1 op t2
-  setSpanInfo sp (ParenPattern _ t) = ParenPattern sp t
-  setSpanInfo sp (RecordPattern _ a c fs) = RecordPattern sp a c fs
-  setSpanInfo sp (TuplePattern _ ts) = TuplePattern sp ts
-  setSpanInfo sp (ListPattern _ a ts) = ListPattern sp a ts
-  setSpanInfo sp (AsPattern _ v t) = AsPattern sp v t
-  setSpanInfo sp (LazyPattern _ t) = LazyPattern sp t
-  setSpanInfo sp (FunctionPattern _ a f' ts) = FunctionPattern sp a f' ts
+  setSpanInfo sp (LiteralPattern _ a l)          = LiteralPattern sp a l
+  setSpanInfo sp (NegativePattern _ a l)         = NegativePattern sp a l
+  setSpanInfo sp (VariablePattern _ a v)         = VariablePattern sp a v
+  setSpanInfo sp (ConstructorPattern _ a c ts)   = ConstructorPattern sp a c ts
+  setSpanInfo sp (InfixPattern _ a t1 op t2)     = InfixPattern sp a t1 op t2
+  setSpanInfo sp (ParenPattern _ t)              = ParenPattern sp t
+  setSpanInfo sp (RecordPattern _ a c fs)        = RecordPattern sp a c fs
+  setSpanInfo sp (TuplePattern _ ts)             = TuplePattern sp ts
+  setSpanInfo sp (ListPattern _ a ts)            = ListPattern sp a ts
+  setSpanInfo sp (AsPattern _ v t)               = AsPattern sp v t
+  setSpanInfo sp (LazyPattern _ t)               = LazyPattern sp t
+  setSpanInfo sp (FunctionPattern _ a f' ts)     = FunctionPattern sp a f' ts
   setSpanInfo sp (InfixFuncPattern _ a t1 op t2) = InfixFuncPattern sp a t1 op t2
 
 instance HasSpanInfo (Expression a) where
-  getSpanInfo (Literal sp _ _) = sp
-  getSpanInfo (Variable sp _ _) = sp
-  getSpanInfo (Constructor sp _ _) = sp
-  getSpanInfo (Paren sp _) = sp
-  getSpanInfo (Typed sp _ _) = sp
-  getSpanInfo (Record sp _ _ _) = sp
-  getSpanInfo (RecordUpdate sp _ _) = sp
-  getSpanInfo (Tuple sp _) = sp
-  getSpanInfo (List sp _ _) = sp
-  getSpanInfo (ListCompr sp _ _) = sp
-  getSpanInfo (EnumFrom sp _) = sp
-  getSpanInfo (EnumFromThen sp _ _) = sp
-  getSpanInfo (EnumFromTo sp _ _) = sp
+  getSpanInfo (Literal sp _ _)          = sp
+  getSpanInfo (Variable sp _ _)         = sp
+  getSpanInfo (Constructor sp _ _)      = sp
+  getSpanInfo (Paren sp _)              = sp
+  getSpanInfo (Typed sp _ _)            = sp
+  getSpanInfo (Record sp _ _ _)         = sp
+  getSpanInfo (RecordUpdate sp _ _)     = sp
+  getSpanInfo (Tuple sp _)              = sp
+  getSpanInfo (List sp _ _)             = sp
+  getSpanInfo (ListCompr sp _ _)        = sp
+  getSpanInfo (EnumFrom sp _)           = sp
+  getSpanInfo (EnumFromThen sp _ _)     = sp
+  getSpanInfo (EnumFromTo sp _ _)       = sp
   getSpanInfo (EnumFromThenTo sp _ _ _) = sp
-  getSpanInfo (UnaryMinus sp _) = sp
-  getSpanInfo (Apply sp _ _) = sp
-  getSpanInfo (InfixApply sp _ _ _) = sp
-  getSpanInfo (LeftSection sp _ _) = sp
-  getSpanInfo (RightSection sp _ _) = sp
-  getSpanInfo (Lambda sp _ _) = sp
-  getSpanInfo (Let sp _ _) = sp
-  getSpanInfo (Do sp _ _) = sp
-  getSpanInfo (IfThenElse sp _ _ _) = sp
-  getSpanInfo (Case sp _ _ _) = sp
+  getSpanInfo (UnaryMinus sp _)         = sp
+  getSpanInfo (Apply sp _ _)            = sp
+  getSpanInfo (InfixApply sp _ _ _)     = sp
+  getSpanInfo (LeftSection sp _ _)      = sp
+  getSpanInfo (RightSection sp _ _)     = sp
+  getSpanInfo (Lambda sp _ _)           = sp
+  getSpanInfo (Let sp _ _ _)            = sp
+  getSpanInfo (Do sp _ _ _)             = sp
+  getSpanInfo (IfThenElse sp _ _ _)     = sp
+  getSpanInfo (Case sp _ _ _ _)         = sp
 
-  setSpanInfo sp (Literal _ a l) = Literal sp a l
-  setSpanInfo sp (Variable _ a v) = Variable sp a v
-  setSpanInfo sp (Constructor _ a c) = Constructor sp a c
-  setSpanInfo sp (Paren _ e) = Paren sp e
-  setSpanInfo sp (Typed _ e qty) = Typed sp e qty
-  setSpanInfo sp (Record _ a c fs) = Record sp a c fs
-  setSpanInfo sp (RecordUpdate _ e fs) = RecordUpdate sp e fs
-  setSpanInfo sp (Tuple _ es) = Tuple sp es
-  setSpanInfo sp (List _ a es) = List sp a es
-  setSpanInfo sp (ListCompr _ e stms) = ListCompr sp e stms
-  setSpanInfo sp (EnumFrom _ e) = EnumFrom sp e
-  setSpanInfo sp (EnumFromThen _ e1 e2) = EnumFromThen sp e1 e2
-  setSpanInfo sp (EnumFromTo _ e1 e2) = EnumFromTo sp e1 e2
+  setSpanInfo sp (Literal _ a l)             = Literal sp a l
+  setSpanInfo sp (Variable _ a v)            = Variable sp a v
+  setSpanInfo sp (Constructor _ a c)         = Constructor sp a c
+  setSpanInfo sp (Paren _ e)                 = Paren sp e
+  setSpanInfo sp (Typed _ e qty)             = Typed sp e qty
+  setSpanInfo sp (Record _ a c fs)           = Record sp a c fs
+  setSpanInfo sp (RecordUpdate _ e fs)       = RecordUpdate sp e fs
+  setSpanInfo sp (Tuple _ es)                = Tuple sp es
+  setSpanInfo sp (List _ a es)               = List sp a es
+  setSpanInfo sp (ListCompr _ e stms)        = ListCompr sp e stms
+  setSpanInfo sp (EnumFrom _ e)              = EnumFrom sp e
+  setSpanInfo sp (EnumFromThen _ e1 e2)      = EnumFromThen sp e1 e2
+  setSpanInfo sp (EnumFromTo _ e1 e2)        = EnumFromTo sp e1 e2
   setSpanInfo sp (EnumFromThenTo _ e1 e2 e3) = EnumFromThenTo sp e1 e2 e3
-  setSpanInfo sp (UnaryMinus _ e) = UnaryMinus sp e
-  setSpanInfo sp (Apply _ e1 e2) = Apply sp e1 e2
-  setSpanInfo sp (InfixApply _ e1 op e2) = InfixApply sp e1 op e2
-  setSpanInfo sp (LeftSection _ e op) = LeftSection sp e op
-  setSpanInfo sp (RightSection _ op e) = RightSection sp op e
-  setSpanInfo sp (Lambda _ ts e) = Lambda sp ts e
-  setSpanInfo sp (Let _ ds e) = Let sp ds e
-  setSpanInfo sp (Do _ stms e) = Do sp stms e
-  setSpanInfo sp (IfThenElse _ e1 e2 e3) = IfThenElse sp e1 e2 e3
-  setSpanInfo sp (Case _ ct e as) = Case sp ct e as
+  setSpanInfo sp (UnaryMinus _ e)            = UnaryMinus sp e
+  setSpanInfo sp (Apply _ e1 e2)             = Apply sp e1 e2
+  setSpanInfo sp (InfixApply _ e1 op e2)     = InfixApply sp e1 op e2
+  setSpanInfo sp (LeftSection _ e op)        = LeftSection sp e op
+  setSpanInfo sp (RightSection _ op e)       = RightSection sp op e
+  setSpanInfo sp (Lambda _ ts e)             = Lambda sp ts e
+  setSpanInfo sp (Let _ li ds e)             = Let sp li ds e
+  setSpanInfo sp (Do _ li stms e)            = Do sp li stms e
+  setSpanInfo sp (IfThenElse _ e1 e2 e3)     = IfThenElse sp e1 e2 e3
+  setSpanInfo sp (Case _ li ct e as)         = Case sp li ct e as
 
 instance HasSpanInfo (Statement a) where
   getSpanInfo (StmtExpr sp _)   = sp
-  getSpanInfo (StmtDecl sp _)   = sp
+  getSpanInfo (StmtDecl sp _ _)  = sp
   getSpanInfo (StmtBind sp _ _) = sp
 
-  setSpanInfo sp (StmtExpr _ ex)   = StmtExpr sp ex
-  setSpanInfo sp (StmtDecl _ ds)   = StmtDecl sp ds
-  setSpanInfo sp (StmtBind _ p ex) = StmtBind sp p ex
+  setSpanInfo sp (StmtExpr _ ex)    = StmtExpr sp ex
+  setSpanInfo sp (StmtDecl _ li ds) = StmtDecl sp li ds
+  setSpanInfo sp (StmtBind _ p ex)  = StmtBind sp p ex
 
 instance HasSpanInfo (Alt a) where
   getSpanInfo (Alt sp _ _) = sp

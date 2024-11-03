@@ -1,6 +1,6 @@
 {- |
      Author  : Kai-Oliver Prott
-     Version : August 2018
+     Version : October 2024
 
      Datatypes for identifiers from the curry-frontend
 -}
