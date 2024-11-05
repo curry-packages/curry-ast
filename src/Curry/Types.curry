@@ -1,7 +1,7 @@
 -- |
 -- Description: AST for curry code
 -- Author     : Kai-Oliver Prott
--- Version    : October 2024
+-- Version    : November 2024
 --
 -- An implementation of the Curry AST from curry-frontend.
 module Curry.Types where
@@ -12,7 +12,7 @@ import Curry.Ident
 import Curry.Position
 
 -- | This datatype is copied from curry-base.
-data Module a = Module LayoutInfo SpanInfo [ModulePragma] ModuleIdent
+data Module a = Module SpanInfo LayoutInfo [ModulePragma] ModuleIdent
                        (Maybe ExportSpec) [ImportDecl] [Decl a]
     deriving (Eq, Read, Show)
 
@@ -232,8 +232,8 @@ data Tool = KnownTool KnownTool | UnknownTool String
     deriving (Eq, Read, Show)
 
 instance HasSpanInfo (Module a) where
-  getSpanInfo (Module _ sp _ _ _ _ _) = sp
-  setSpanInfo sp (Module li _ ps m es is ds) = Module li sp ps m es is ds
+  getSpanInfo (Module sp _ _ _ _ _ _) = sp
+  setSpanInfo sp (Module _ li ps m es is ds) = Module sp li ps m es is ds
 
 instance HasSpanInfo (Decl a) where
   getSpanInfo (InfixDecl        sp _ _ _)       = sp
