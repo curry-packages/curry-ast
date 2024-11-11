@@ -1,6 +1,6 @@
 {- |
      Author  : Kai-Oliver Prott
-     Version : August 2018
+     Version : October 2024
 
      Datatype and operations to handle SpanInfos.
 -}
@@ -14,6 +14,10 @@ data SpanInfo = SpanInfo Span [Span] -- ^ Span for the whole entity
                                      -- e.g. keywords.
               | NoSpanInfo
   deriving (Eq, Show, Read)
+
+data LayoutInfo = ExplicitLayout [Span] 
+                | WhitespaceLayout
+    deriving (Eq, Read, Show)
 
 -- | A class for easy access to SpanInfos
 class HasSpanInfo a where
@@ -70,7 +74,7 @@ setSrcInfoPoints inf a = case getSpanInfo a of
   SpanInfo s _ -> setSpanInfo (SpanInfo s      inf) a
 
 getStartPosition :: HasSpanInfo a => a -> Position
-getStartPosition a =  case getSrcSpan a of
+getStartPosition a = case getSrcSpan a of
   NoSpan   -> NoPos
   Span s _ -> s
 
