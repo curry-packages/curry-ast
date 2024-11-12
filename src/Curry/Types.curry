@@ -264,6 +264,10 @@ instance HasSpanInfo (Decl a) where
   setSpanInfo sp (ClassDecl     _ li cx cls clsvar fdeps ds) = ClassDecl sp li cx cls clsvar fdeps ds
   setSpanInfo sp (InstanceDecl  _ li cx qcls inst ds)        = InstanceDecl sp li cx qcls inst ds
 
+instance HasSpanInfo FunDep where
+  getSpanInfo (FunDep sp _ _) = sp
+  setSpanInfo sp (FunDep _ xs ys) = FunDep sp xs ys
+
 instance HasSpanInfo (Equation a) where
   getSpanInfo (Equation spi _ _ _) = spi
   setSpanInfo spi (Equation _ t lhs rhs) = Equation spi t lhs rhs
