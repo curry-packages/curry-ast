@@ -4,8 +4,10 @@
 
      Datatype and operations to handle Spans.
 -}
+{-# OPTIONS_FRONTEND -Wno-incomplete-patterns #-}
+
 module Curry.Span (
- Span(..),
+ Span(..), start, end,
  -- * Transformer,
  isSpan, isNoSpan, fromPosition, stripStart, span2Pos, combineSpans, addSpan,
  -- * Distance management
@@ -15,12 +17,15 @@ module Curry.Span (
 import Curry.Position
 
 data Span 
-  = Span 
-    { start :: Position
-    , end   :: Position
-    }
+  = Span Position Position
   | NoSpan
     deriving (Eq, Show, Read)
+
+start :: Span -> Position
+start (Span x _) = x
+
+end :: Span -> Position
+end (Span _ y) = y
 
 isSpan :: Span -> Bool
 isSpan (Span {})  = True

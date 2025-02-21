@@ -4,15 +4,20 @@
 
      Datatype and operations to handle Positions.
 -}
+{-# OPTIONS_FRONTEND -Wno-incomplete-patterns #-}
+
 module Curry.Position where
 
 data Position 
-  = Position 
-    { line     :: Int
-    , column   :: Int
-    }
+  = Position Int Int
   | NoPos
   deriving (Eq, Ord, Show, Read)
+
+line :: Position -> Int
+line (Position l _) = l
+
+column :: Position -> Int
+column (Position _ c) = c
 
 -- | Distance between the row of the first and the second argument
 rowDist :: Position -> Position -> Int

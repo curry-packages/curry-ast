@@ -1,3 +1,14 @@
+-- ---------------------------------------------------------------------------
+--- This library defines various I/O actions to read abstract syntax trees
+--- of Curry programs and transform them into the representation
+--- defined in module `Curry.Types`.
+---
+--- Assumption: the abstract syntax tree of a Curry program is stored
+--- in file with extension `.sast` (short AST) or `.ast` (full AST).
+---
+--- @version February 2025
+-- ---------------------------------------------------------------------------
+
 module Curry.Files where
 
 import System.Directory  ( doesFileExist, getFileWithSuffix )
