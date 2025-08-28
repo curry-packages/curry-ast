@@ -6,13 +6,14 @@
 --- Assumption: the abstract syntax tree of a Curry program is stored
 --- in file with extension `.sast` (short AST) or `.ast` (full AST).
 ---
---- @version February 2025
+--- @version August 2025
 -- ---------------------------------------------------------------------------
 
 module Curry.Files where
 
 import System.Directory  ( doesFileExist, getFileWithSuffix )
 import System.FilePath   ( takeFileName, (</>), (<.>) )
+import System.IO         ( IOMode(..), hGetContents, openFile )     
 import ReadShowTerm      ( readUnqualifiedTerm ) -- for faster reading
 
 import System.CurryPath    ( lookupModuleSourceInLoadPath, getLoadPathForModule
@@ -86,10 +87,12 @@ readShortASTFileRaw :: String -> IO String
 readShortASTFileRaw filename = do
   extfcy <- doesFileExist filename
   if extfcy
-   then readFile filename
+   then readCompleteFile filename
    else do let subdirfilename = inCurrySubdir filename
            exdirtfcy <- doesFileExist subdirfilename
            if exdirtfcy
-            then readFile subdirfilename
+            then readCompleteFile subdirfilename
             else error ("EXISTENCE ERROR: AST file '" ++ filename ++
                         "' does not exist")
+ where
+  readCompleteFile fn = openFile fn ReadMode >>= hGetContents
